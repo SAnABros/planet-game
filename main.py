@@ -20,6 +20,8 @@ class Asteroid():
 
 asteroid = [Asteroid('texture/asteroid1.png', (random.randint(0,1)*screen.x, random.randint(0,1)*screen.y)),
 			Asteroid('texture/asteroid1.png', (random.randint(0,1)*screen.x, random.randint(0,1)*screen.y))]
+for i in range(10):
+	asteroid.append(Asteroid('texture/asteroid1.png', (random.randint(0,1)*screen.x, random.randint(0,1)*screen.y)))
 class BOOM():
 	particles = []
 	@staticmethod
@@ -28,6 +30,8 @@ class BOOM():
 			BOOM.particles.append([[x,y], [random.randint(min, max)/10, random.randint(min,max)/10], random.randint(4,6)])
 	@staticmethod
 	def draw():
+		if len(BOOM.particles)>100:
+			del BOOM.particles[99:len(BOOM.particles)-1]
 		for particle in BOOM.particles:
 			particle[0][0] += particle[1][0]*(random.randint(100,5000)/1000)
 			particle[0][1] += particle[1][1]*(random.randint(100,5000)/1000)
@@ -36,16 +40,18 @@ class BOOM():
 			if particle[2]<=0:
 				BOOM.particles.remove(particle)
 planetLifes = 10
-gameON = True
 direction = 0 #planet direction
 Mdir = 0 #moon direction
 seed = random.randint(0,1000)
 shift = pygame.Vector2(0,0)
 clock = pygame.time.Clock()
-while gameON:
+while True:
+	FPS = clock.tick()
 	for event in pygame.event.get():
-		if event.type == pygame.QUIT:
-			gameON = False
+		if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+			from sys import exit
+			exit()
+			pygame.quit()
 	key = pygame.key.get_pressed()
 	if key[pygame.K_ESCAPE]:
 		gameON = False
@@ -67,11 +73,11 @@ while gameON:
 	from math import hypot
 	for asteroid1 in asteroid:
 		asteroid1.dist = hypot(screen.x/2-asteroid1.x, screen.y/2-asteroid1.y)
-		asteroid1.x += (screen.x/2-asteroid1.x)/asteroid1.dist*5
-		asteroid1.y += (screen.y/2-asteroid1.y)/asteroid1.dist*5
+		asteroid1.x += (screen.x/2-asteroid1.x)/asteroid1.dist*FPS/10
+		asteroid1.y += (screen.y/2-asteroid1.y)/asteroid1.dist*FPS/10
 		astr = pygame.transform.rotate(asteroid1.image, asteroid1.rotate)
-		asteroid1.rotate += 1
-		sc.blit(astr, (asteroid1.x-asteroid1.image.get_width()/2+shift.x, asteroid1.y-asteroid1.image.get_height()/2+shift.y))
+		asteroid1.rotate += FPS/10
+		sc.blit(astr, (asteroid1.x-astr.get_width()/2+shift.x, asteroid1.y-astr.get_height()/2+shift.y))
 		MoonRect = pygame.Rect(screen.x/2+Mpos.x-Moon.get_width()/2, screen.y/2+Mpos.y-Moon.get_height()/2, Moon.get_width(), Moon.get_height())
 		AsteroidRect = pygame.Rect((asteroid1.x-asteroid1.image.get_width()/2, asteroid1.y-asteroid1.image.get_height()/2), asteroid1.image.get_rect().size)
 		from time import time
@@ -110,8 +116,6 @@ while gameON:
 	pygame.draw.rect(sc, (0,200,0), [screen.x/2-50+shift.x, screen.y/2+planet.get_height(), planetLifes*10+shift.y, 10])
 	pygame.draw.rect(sc, (0,0,0), [screen.x/2-50+shift.x, screen.y/2+planet.get_height()+shift.y, 100, 10], 4)
 	pygame.display.update()
-	direction += 2*rotateSpeed if rotateSpeed else 2
-	Mdir -= rotateSpeed*3.14/180 if rotateSpeed else 3.14/180
-	#pygame.time.wait(25)
-	pygame.display.set_caption(str(1000//clock.tick(60)))
-pygame.quit()
+	direction += 2*rotateSpeed*FPS/10 if rotateSpeed else 2*FPS/10
+	Mdir -= rotateSpeed*3.14/180*FPS/10 if rotateSpeed else 3.14/180*FPS/10
+	pygame.display.set_caption(str(1000//FPS)) if FPS else pygame.display.set_caption('0')
